@@ -628,5 +628,4 @@
         });
         $A.enqueueAction(action);
      }
-
 })
