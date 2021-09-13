@@ -1,0 +1,208 @@
+<aura:component controller="PlannerController"
+    implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+    access="global">
+
+    <ltng:require scripts="{!$Resource.moment + '/moment.min.js'}" />
+
+    <aura:attribute name="listTeamMembers" type="List" />
+
+    <aura:attribute name="columns" type="List" />
+    <aura:attribute name="data" type="Object" />
+    <aura:attribute name="gridExpandedRows" type="List" />
+    <aura:attribute name="isLoading" type="Boolean" default="false" />
+    <aura:attribute name="expandSwitcher" type="Boolean" />
+    <aura:attribute name="switchToDaysAndMonths" type="Boolean" default="true" />
+
+    <aura:attribute name="listMonthInYear" type="String[]" />
+    <aura:attribute name="days" type="List" />
+    <aura:attribute name="months" type="List" />
+    <aura:attribute name="currentDate" type="Object" />
+    <aura:attribute name="mainDate" type="String" />
+
+    <aura:attribute name="optionsView" type="List" />
+    <aura:attribute name="selectedView" type="String" />
+
+    <aura:attribute name="ptmIsOpen" type="boolean" default="false" />
+
+    <aura:attribute name="ptmId" type="String" />
+
+    <aura:attribute name="isOpenSetup" type="Boolean" default="false" />
+    <aura:attribute name="classOpenSetup" type="String" default="hideOpenSetup" />
+
+    <aura:attribute name="fullColor" type="String" default="#FF8C00" />
+    <aura:attribute name="partColor" type="String" default="#40E0D0" />
+    <aura:attribute name="crossedColor" type="String" default="#45a247" />
+    <aura:attribute name="hourlyColor" type="String" default="#FFFF00" />
+    <aura:attribute name="greyColor" type="String" default="#b0adab" />
+
+    <aura:attribute name="grayOut" type="boolean" default="false" />
+    <aura:attribute name="showImp" type="boolean" default="false" />
+    <aura:attribute name="showTMTitle" type="boolean" default="false" />
+    <aura:attribute name="showProjectNames" type="boolean" default="false" />
+    <aura:attribute name="showTMStartDate" type="boolean" default="false" />
+    
+    <aura:attribute name="OfficeLocation" type="String" />
+
+    <aura:attribute name="OptionsList" type="List" default="[]" description="Options Picklist Values" />
+    <aura:attribute name="selectedOptionsList" type="List" default="[]"
+        description="Selected Options Picklist Values" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:handler name="change" value="{!v.currentDate}" action="{!c.handleChange}" />
+    <aura:handler name="change" value="{!v.OfficeLocation}" action="{!c.handleChange}" />
+
+    <aura:html tag="style">
+        :root {
+        --fullColor: {!v.fullColor};
+        --partColor: {!v.partColor};
+        --crossedColor: {!v.crossedColor};
+        --crossedColor: {!v.crossedColor};
+        --greyColor: {!v.greyColor};
+        --hourlyColor: {!v.hourlyColor};
+        }
+    </aura:html>
+
+    <div style="width: 100%;">
+        <lightning:card title="Planner" iconName="standard:account">
+            <div class="slds-p-left_medium slds-p-right_medium" style="display: flex; justify-content: space-between;">
+                <div style="width:70px; display: flex; justify-content: space-between;">
+                    <lightning:buttonIcon class="removeBorder" iconName="utility:expand_alt" size="large" variant="bare"
+                        onclick="{!c.expandSwitcher}" />
+                    <lightning:buttonIcon class="removeBorder" iconName="utility:refresh" size="large" variant="bare"
+                        onclick="{!c.refresh}" />
+                </div>
+                <lightning:buttonIcon class="removeBorder" iconName="utility:setup" size="large" variant="bare"
+                    onclick="{!c.setup}" />
+            </div>
+            <div style="display: flex; margin-top: -40px; justify-content: space-around;" class="slds-p-bottom_x-small">
+                <!--lightning:button variant="brand-outline" label="Current" onclick="{! c.currentDate }" /-->
+                <div style="width: 90%; display: flex; justify-content: center;">
+                    <lightning:buttonIcon class="slds-p-right_x-small removeBorder" iconName="utility:chevronleft"
+                        variant="bare" onclick="{!c.goBackInTime}" />
+                    <div style="font-size: 20px; width: 15%; display: flex; justify-content: center; padding: 10px 20px ; box-shadow: 0 0 10px rgba(0,0,0,0.3); border-radius: 60%; font-size: 11px; cursor: pointer;"
+                        onclick="{!c.currentDate}">
+                        <aura:if isTrue="{!v.switchToDaysAndMonths}">
+                            <div class="slds-text-title_caps">{!v.currentDate.currentYear + ' ' +
+                                v.currentDate.currentMonth}</div>
+                            <aura:set attribute="else">
+                                <div class="slds-text-title_caps">{!v.currentDate.currentYear}</div>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                    <lightning:buttonIcon class="slds-p-left_x-small removeBorder" iconName="utility:chevronright"
+                        variant="bare" onclick="{!c.goToTheFuture}" />
+                </div>
+            </div>
+            <div style="width: 40%" class="{!v.classOpenSetup}">
+                <div style="display: flex;">
+                    <lightning:select class="slds-p-left_medium slds-p-bottom_medium" value="{!v.selectedView}"
+                        onchange="{!c.changedView}">
+                        <aura:iteration items="{!v.optionsView}" var="option">
+                            <option class="slds-dropdown__item" text="{!option.label}" value="{!option.id}"
+                                selected="{!option.selected}" />
+                        </aura:iteration>
+                    </lightning:select>
+                <div class="view_checkbox">
+                    <div class="{!v.classOpenSetup}">
+                        <div class="slds-form-element__control"
+                            style="display: flex; flex-direction:column; justify-content:center">
+                            <div class="slds-checkbox" style="margin-left: 5px;">
+                                <input type="checkbox" name="options" id="checkbox-unique-id-73" aura:id="checkboxGray"
+                                    checked="false" onclick="{!c.handleGrayOut}" />
+                                <label class="slds-checkbox__label" for="checkbox-unique-id-73">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"> Gray Out Past</span>
+                                </label>
+                            </div>
+                            <div class="slds-checkbox" style="margin-left: 5px;">
+                                <input type="checkbox" name="options" id="checkbox-unique-id-74"
+                                    aura:id="checkboxImprovements" checked="false" onclick="{!c.showImprovements}" />
+                                <label class="slds-checkbox__label" for="checkbox-unique-id-74">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"> Show Improvements</span>
+                                </label>
+                            </div>
+                            <div class="slds-checkbox" style="margin-left: 5px;">
+                                <input type="checkbox" name="options" id="checkbox-unique-id-75"
+                                    aura:id="checkboxTMTitle" checked="false" onclick="{!c.showTMTitle}" />
+                                <label class="slds-checkbox__label" for="checkbox-unique-id-75">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"> Show Team Member Title</span>
+                                </label>
+                            </div>
+                            <div class="slds-checkbox" style="margin-left: 5px;">
+                                <input type="checkbox" name="options" id="checkbox-unique-id-76"
+                                    aura:id="checkboxProjectNames" checked="false" onclick="{!c.showProjectNames}" />
+                                <label class="slds-checkbox__label" for="checkbox-unique-id-76">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"> Show Project Names</span>
+                                </label>
+                            </div>
+                            <div class="slds-checkbox" style="margin-left: 5px;">
+                                <input type="checkbox" name="option" id="checkbox-unique-id-77"
+                                       aura:id="checkboxTMStartDate" checked="false" onclick="{!c.showTMStartDate}"/>
+                                <label class="slds-checkbox__label" for="checkbox-unique-id-77">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"> Show Team Member Start Date</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <div class="{!v.classOpenSetup}">
+                        <div class="slds-m-around_xx-large">
+                            <lightning:dualListbox  aura:id="selectOptions"
+                                                    name="Options"
+                                                    label="Select Options"
+                                                    sourceLabel="Available"
+                                                    selectedLabel="Selected"
+                                                    options="{!v.OptionsList }"
+                                                    value="{!v.selectedOptionsList}"
+                                                    onchange="{!c.handleOptionsChange}"
+                                                    class="picklist" />
+                            <lightning:button   variant="brand"
+                                                label="Filter Selected Options"
+                                                onclick="{!c.getSelectedOptions}" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div aura:id="openSetup" class="{!v.classOpenSetup}"
+                style="display: flex; justify-content: flex-end; margin-top: -70px; margin-bottom: 20px;">
+                <lightning:input aura:id="hourlyColor" onchange="{!c.handleColor}" class="{!v.classOpenSetup}"
+                    type="color" label="Hourly" value="{!v.hourlyColor}" />
+                <lightning:input aura:id="fullColor" onchange="{!c.handleColor}" class="{!v.classOpenSetup}"
+                    type="color" label="Full Time" value="{!v.fullColor}" />
+                <lightning:input aura:id="partColor" onchange="{!c.handleColor}" class="{!v.classOpenSetup}"
+                    type="color" label="Part Time" value="{!v.partColor}" />
+                <lightning:input aura:id="crossedColor" onchange="{!c.handleColor}" class="{!v.classOpenSetup}"
+                    type="color" label="Сrossover" value="{!v.crossedColor}" />
+            </div>
+
+            <lightning:tabset aura:id="tabSet" selectedTabId="{!v.OfficeLocation}" class="slds-p-top_xx-large">
+                <aura:iteration items="Antonovycha,Khmelnytskogo" var="office">
+                    <lightning:tab label="{!office}" id="{!office}">
+                        <lightning:treeGrid aura:id="treegrid_async"
+                                            class="slds-table--bordered slds-table--col-bordered slds-no-row-hover"
+                                            columns="{! v.columns }"
+                                            data="{! v.data }"
+                                            expandedRows="{! v.gridExpandedRows }"
+                                            onrowaction="{! c.handleRowAction}"
+                                            keyField="id"
+                                            hideCheckboxColumn="true"
+                                            isLoading="{! v.isLoading }" />
+                    </lightning:tab>
+                </aura:iteration>
+            </lightning:tabset>
+
+
+        </lightning:card>
+    </div>
+
+    <c:editProjectTeamMemberCmp id="{!v.ptmId}" isOpen="{!v.ptmIsOpen}"></c:editProjectTeamMemberCmp>
+
+</aura:component>
