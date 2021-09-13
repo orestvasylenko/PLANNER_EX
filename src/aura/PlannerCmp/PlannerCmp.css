@@ -1,0 +1,84 @@
+.THIS lightning-primitive-header-actions {
+    display: none;
+}
+.THIS .slds-table {
+    table-layout: auto !important;
+    width: 100% !important;
+}
+
+.THIS .slds-scrollable_y {
+    overflow: hidden;
+    width: 99.6% !important;
+}
+
+.THIS .slds-scrollable_x{
+    overflow: hidden;
+    width: 99.6% !important;
+}
+
+.THIS .slds-cell-fixed th {
+    width:15px !important;
+}
+
+.THIS .slds-truncate {
+    font-size: 13px;
+    white-space: initial !important;
+}
+
+.THIS .slds-th__action {
+    font-size: 15px;
+    padding: 10px;
+    
+}
+
+.THIS .slds-hint-parent :not(.slds-tree__item){
+    /* padding-left: 2px !important; */
+    padding-right: 0px !important;
+    text-align: left !important;
+    /* display: -webkit-inline-box !important;;  */
+}
+
+.THIS .removeBorder {
+	box-shadow:none;
+}
+
+.THIS .Full {
+    background: linear-gradient(to bottom, var(--fullColor), var(--fullColor));
+}
+            
+.THIS .Part {
+    background: linear-gradient(to bottom, var(--partColor), var(--partColor));    
+}
+.THIS .Hourly {
+    background: linear-gradient(to bottom, var(--hourlyColor), var(--hourlyColor));    
+}
+                                        
+.THIS .Crossed {
+    background: linear-gradient(to bottom, var(--crossedColor), var(--crossedColor)); 
+}
+
+.THIS .Grey {
+    background: linear-gradient(to bottom, var(--greyColor), var(--greyColor)); 
+}
+
+.THIS .Inactive {
+   background-color: white;    
+}
+.THIS .hideOpenSetup {
+     display: none;                                                   
+}
+.THIS .showOpenSetup {
+     display: flex;
+}
+.THIS .dark {
+    transform: scale(2);
+}
+.THIS .slds-button {
+    border: none;                        
+}
+
+.THIS .view_checkbox{
+    height: 140px;
+    width: 250px;
+    margin-top: 20%;
+}
